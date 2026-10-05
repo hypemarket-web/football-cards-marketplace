@@ -1,0 +1,326 @@
+import { useMemo, useState } from 'react';
+
+const products = [
+  {
+    id: 1,
+    name: 'Cristiano Ronaldo 2024 Legend',
+    club: 'Al-Nassr',
+    rarity: 'Gold Rare',
+    price: 120,
+    image:
+      'https://images.unsplash.com/photo-1547347298-4074fc3086f0?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 2,
+    name: 'Kylian Mbappé Matchday',
+    club: 'Real Madrid',
+    rarity: 'Silver',
+    price: 85,
+    image:
+      'https://images.unsplash.com/photo-1579952363873-27d3bfad9c0d?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 3,
+    name: 'Lionel Messi Icons',
+    club: 'Inter Miami',
+    rarity: 'Diamond',
+    price: 150,
+    image:
+      'https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 4,
+    name: 'Erling Haaland Prodigy',
+    club: 'Manchester City',
+    rarity: 'Blue Parallel',
+    price: 95,
+    image:
+      'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 5,
+    name: 'Vinicius Jr. Rising Star',
+    club: 'Real Madrid',
+    rarity: 'Red Hot',
+    price: 70,
+    image:
+      'https://images.unsplash.com/photo-1556056504-5c7696c4c28d?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 6,
+    name: 'Jude Bellingham Future',
+    club: 'Real Madrid',
+    rarity: 'Limited',
+    price: 110,
+    image:
+      'https://images.unsplash.com/photo-1518604666860-9ed391f76460?auto=format&fit=crop&w=900&q=80',
+  },
+];
+
+const initialForm = {
+  fullName: '',
+  phone: '',
+  address: '',
+  city: '',
+  notes: '',
+};
+
+function App() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [cart, setCart] = useState([]);
+  const [form, setForm] = useState(initialForm);
+  const [orderPlaced, setOrderPlaced] = useState(false);
+
+  const filteredProducts = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) return products;
+
+    return products.filter(
+      (product) =>
+        product.name.toLowerCase().includes(query) ||
+        product.club.toLowerCase().includes(query) ||
+        product.rarity.toLowerCase().includes(query)
+    );
+  }, [searchTerm]);
+
+  const addToCart = (productId) => {
+    setCart((currentCart) => {
+      const itemExists = currentCart.find((item) => item.id === productId);
+
+      if (itemExists) {
+        return currentCart.map((item) =>
+          item.id === productId ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      }
+
+      return [...currentCart, { id: productId, quantity: 1 }];
+    });
+  };
+
+  const changeQuantity = (productId, delta) => {
+    setCart((currentCart) =>
+      currentCart
+        .map((item) =>
+          item.id === productId ? { ...item, quantity: item.quantity + delta } : item
+        )
+        .filter((item) => item.quantity > 0)
+    );
+  };
+
+  const subtotal = cart.reduce((sum, cartItem) => {
+    const product = products.find((item) => item.id === cartItem.id);
+    return sum + (product ? product.price * cartItem.quantity : 0);
+  }, 0);
+
+  const shipping = subtotal > 0 ? 15 : 0;
+  const total = subtotal + shipping;
+
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    setForm((currentForm) => ({ ...currentForm, [name]: value }));
+  };
+
+  const placeOrder = (event) => {
+    event.preventDefault();
+
+    if (!form.fullName || !form.phone || !form.address || !form.city) {
+      alert('Please fill in your full name, phone number, address, and city.');
+      return;
+    }
+
+    if (cart.length === 0) {
+      alert('Your cart is empty. Add a few cards before checkout.');
+      return;
+    }
+
+    setOrderPlaced(true);
+    setCart([]);
+    setForm(initialForm);
+  };
+
+  const cartItems = cart.map((cartItem) => {
+    const product = products.find((item) => item.id === cartItem.id);
+    return product ? { ...product, quantity: cartItem.quantity } : null;
+  }).filter(Boolean);
+
+  return (
+    <div className="page-shell">
+      <header className="topbar">
+        <div className="logo-wrap">
+          <span className="logo-mark">⚽</span>
+          <div>
+            <p className="kicker">Official Store</p>
+            <h1>Football Card Market</h1>
+          </div>
+        </div>
+
+        <nav className="nav-links">
+          <a href="#shop">Shop</a>
+          <a href="#checkout">Checkout</a>
+        </nav>
+      </header>
+
+      <main className="content-grid">
+        <section id="shop" className="shop-panel">
+          <div className="hero">
+            <div>
+              <span className="eyebrow">Fresh drops</span>
+              <h2>Collect rare football cards</h2>
+            </div>
+            <div className="search-box">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Search player, club, rarity"
+                aria-label="Search cards"
+              />
+            </div>
+          </div>
+
+          <div className="product-grid">
+            {filteredProducts.map((product) => (
+              <article key={product.id} className="product-card">
+                <img src={product.image} alt={product.name} />
+                <div className="product-body">
+                  <div className="product-meta">
+                    <span>{product.club}</span>
+                    <span>{product.rarity}</span>
+                  </div>
+                  <h3>{product.name}</h3>
+                  <div className="product-footer">
+                    <strong>${product.price}</strong>
+                    <button onClick={() => addToCart(product.id)}>Add to cart</button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <aside className="cart-panel" id="checkout">
+          <div className="cart-header">
+            <h3>Cart</h3>
+            <span>{cartItems.reduce((count, item) => count + item.quantity, 0)} items</span>
+          </div>
+
+          {cartItems.length === 0 ? (
+            <div className="empty-cart">
+              <p>Your cart is empty.</p>
+              <small>Add cards to start your order.</small>
+            </div>
+          ) : (
+            <div className="cart-list">
+              {cartItems.map((item) => (
+                <div key={item.id} className="cart-item">
+                  <div>
+                    <h4>{item.name}</h4>
+                    <p>${item.price} each</p>
+                  </div>
+                  <div className="quantity-controls">
+                    <button onClick={() => changeQuantity(item.id, -1)}>-</button>
+                    <span>{item.quantity}</span>
+                    <button onClick={() => changeQuantity(item.id, 1)}>+</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="order-summary">
+            <div>
+              <span>Subtotal</span>
+              <strong>${subtotal}</strong>
+            </div>
+            <div>
+              <span>Shipping</span>
+              <strong>${shipping}</strong>
+            </div>
+            <div className="grand-total">
+              <span>Total</span>
+              <strong>${total}</strong>
+            </div>
+          </div>
+
+          <form onSubmit={placeOrder} className="checkout-form">
+            <label>
+              Full Name
+              <input
+                type="text"
+                name="fullName"
+                value={form.fullName}
+                onChange={handleInputChange}
+                placeholder="John Smith"
+              />
+            </label>
+
+            <label>
+              Phone Number
+              <input
+                type="tel"
+                name="phone"
+                value={form.phone}
+                onChange={handleInputChange}
+                placeholder="+1 555 123 4567"
+              />
+            </label>
+
+            <label>
+              Delivery Address
+              <textarea
+                name="address"
+                value={form.address}
+                onChange={handleInputChange}
+                placeholder="House number, street, apartment"
+                rows="3"
+              />
+            </label>
+
+            <label>
+              City
+              <input
+                type="text"
+                name="city"
+                value={form.city}
+                onChange={handleInputChange}
+                placeholder="Manchester"
+              />
+            </label>
+
+            <label>
+              Notes (optional)
+              <textarea
+                name="notes"
+                value={form.notes}
+                onChange={handleInputChange}
+                placeholder="Delivery instructions"
+                rows="2"
+              />
+            </label>
+
+            <div className="payment-box">
+              <span className="payment-label">Payment</span>
+              <div className="payment-option">
+                <input type="radio" checked readOnly />
+                <label>Cash on Delivery</label>
+              </div>
+            </div>
+
+            <button type="submit" className="checkout-button">
+              Place Order
+            </button>
+          </form>
+
+          {orderPlaced && (
+            <div className="success-message">
+              <h4>Order placed successfully!</h4>
+              <p>We will contact you for delivery confirmation. Payment will be made on delivery.</p>
+            </div>
+          )}
+        </aside>
+      </main>
+    </div>
+  );
+}
+
+export default App;
